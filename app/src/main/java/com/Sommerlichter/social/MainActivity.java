@@ -15,16 +15,21 @@ import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
 
+    boolean loaded = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        loadManifest();
-        setDisplay(this);
-        setOrientation(this);
-        setName(this);
-        setContentView(R.layout.activity_main);
-        setWebView((WebView) this.findViewById(R.id.webView));
+        if (!loaded) {
+            loadManifest();
+            setDisplay(this);
+            setOrientation(this);
+            setName(this);
+            setContentView(R.layout.activity_main);
+            setWebView((WebView) this.findViewById(R.id.webView));
+            loaded = true;
+        }
     }
 
     private void setDisplay(Activity activity) {
