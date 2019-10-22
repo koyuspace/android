@@ -1,4 +1,4 @@
-package com.Sommerlichter.social;
+package com.koyu.space;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
