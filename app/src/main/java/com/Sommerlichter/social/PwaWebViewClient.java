@@ -1,4 +1,4 @@
-package com.koyu.space;
+package com.Sommerlichter.social;
 
 import android.content.Intent;
 import android.net.Uri;

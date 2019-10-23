@@ -1,4 +1,4 @@
-package com.koyu.space;
+package com.Sommerlichter.social;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
