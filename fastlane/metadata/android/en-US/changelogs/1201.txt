@@ -1,0 +1,5 @@
+- Changed package name
+- Released to F-Droid
+- New version number for Google Play
+- Tablet support
+- Fixed crash on startup

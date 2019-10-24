@@ -1,0 +1,5 @@
+- Paketnamen geändert
+- Veröffentlichung auf F-Droid
+- Neue Versionsnummer für Google Play
+- Tablet-Unterstützung
+- Absturz beim Start behoben
