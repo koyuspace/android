@@ -2,20 +2,26 @@ package com.Sommerlichter.social;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.*;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import org.json.*;
 
@@ -27,6 +33,7 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity {
 
     boolean loaded = false;
+    boolean fullscreen = false;
     WebView webView;
     private String mCM;
     private ValueCallback<Uri> mUM;
@@ -279,7 +286,9 @@ public class MainActivity extends AppCompatActivity {
             switch (keyCode) {
                 case KeyEvent.KEYCODE_BACK:
                     if (webView.canGoBack()) {
-                        webView.goBack();
+                        if (!fullscreen) {
+                            webView.goBack();
+                        }
                     } else {
                         finish();
                     }
@@ -304,12 +313,11 @@ public class MainActivity extends AppCompatActivity {
             setRequestedOrientation(this.mOriginalOrientation);
             this.mCustomViewCallback.onCustomViewHidden();
             this.mCustomViewCallback = null;
+            fullscreen = false;
         }
 
-        public void onShowCustomView(View paramView, WebChromeClient.CustomViewCallback paramCustomViewCallback)
-        {
-            if (this.mCustomView != null)
-            {
+        public void onShowCustomView(View paramView, WebChromeClient.CustomViewCallback paramCustomViewCallback) {
+            if (this.mCustomView != null) {
                 onHideCustomView();
                 return;
             }
@@ -317,9 +325,17 @@ public class MainActivity extends AppCompatActivity {
             this.mOriginalSystemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
             this.mOriginalOrientation = getRequestedOrientation();
             this.mCustomViewCallback = paramCustomViewCallback;
-            ((FrameLayout)getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
-            getWindow().getDecorView().setSystemUiVisibility(3846);
+            ((FrameLayout) getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
+            getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            fullscreen = true;
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                }
+            }, 500);
         }
     }
 }

@@ -1,0 +1,2 @@
+- Fix black screen in fullscreen mode
+- Fix back button handling in fullscreen mode
