@@ -13,7 +13,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.View;
 import android.webkit.*;
+import android.widget.FrameLayout;
 
 import org.json.*;
 
@@ -113,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         String scope = this.manifestObject.optString("scope");
         myWebView.setWebViewClient(new PwaWebViewClient(start_url, scope));
         myWebView.loadUrl(start_url);
-        webView.setWebChromeClient(new WebChromeClient() {
+        webView.setWebChromeClient(new MyChrome() {
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 if (mUMA != null) {
                     mUMA.onReceiveValue(null);
@@ -154,6 +156,20 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState )
+    {
+        super.onSaveInstanceState(outState);
+        webView.saveState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState)
+    {
+        super.onRestoreInstanceState(savedInstanceState);
+        webView.restoreState(savedInstanceState);
     }
 
     public void openFileChooser(ValueCallback<Uri> uploadMsg) {
@@ -272,5 +288,38 @@ public class MainActivity extends AppCompatActivity {
 
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    private class MyChrome extends WebChromeClient {
+        private View mCustomView;
+        private WebChromeClient.CustomViewCallback mCustomViewCallback;
+        private int mOriginalOrientation;
+        private int mOriginalSystemUiVisibility;
+
+        public void onHideCustomView()
+        {
+            ((FrameLayout)getWindow().getDecorView()).removeView(this.mCustomView);
+            this.mCustomView = null;
+            getWindow().getDecorView().setSystemUiVisibility(this.mOriginalSystemUiVisibility);
+            setRequestedOrientation(this.mOriginalOrientation);
+            this.mCustomViewCallback.onCustomViewHidden();
+            this.mCustomViewCallback = null;
+        }
+
+        public void onShowCustomView(View paramView, WebChromeClient.CustomViewCallback paramCustomViewCallback)
+        {
+            if (this.mCustomView != null)
+            {
+                onHideCustomView();
+                return;
+            }
+            this.mCustomView = paramView;
+            this.mOriginalSystemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
+            this.mOriginalOrientation = getRequestedOrientation();
+            this.mCustomViewCallback = paramCustomViewCallback;
+            ((FrameLayout)getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
+            getWindow().getDecorView().setSystemUiVisibility(3846);
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
     }
 }

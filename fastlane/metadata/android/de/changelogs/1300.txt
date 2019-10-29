@@ -1,0 +1,2 @@
+- Vollbild-Unterstützung hinzugefügt
+- Die App lädt sich nicht mehr neu wenn man das Gerät dreht

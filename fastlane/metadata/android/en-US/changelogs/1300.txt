@@ -1,0 +1,2 @@
+- Fullscreen support added
+- The app doesn't reload if the screen is being rotated
