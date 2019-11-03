@@ -1,0 +1,2 @@
+- Hardwarebeschleunigung wird nun unterstützt
+- Behebt einen Fehler wo sich die App ab Android 7 neulädt sobald der Dialog für die Dateiauswahl geschlossen wurde

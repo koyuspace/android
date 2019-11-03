@@ -122,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
         String scope = this.manifestObject.optString("scope");
         myWebView.setWebViewClient(new PwaWebViewClient(start_url, scope));
         myWebView.loadUrl(start_url);
+        myWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         webView.setWebChromeClient(new MyChrome() {
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 if (mUMA != null) {

@@ -1,0 +1,2 @@
+- Enabled hardware acceleration for WebView
+- Fixes an issue where the app was reloading itself on Android 7+ after the file selection dialog was closed
