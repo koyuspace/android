@@ -1,31 +1,37 @@
 package com.Sommerlichter.social;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.webkit.*;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
-import org.json.*;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -123,6 +129,48 @@ public class MainActivity extends AppCompatActivity {
         myWebView.setWebViewClient(new PwaWebViewClient(start_url, scope));
         myWebView.loadUrl(start_url);
         myWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_DENIED) {
+                Log.d("permission", "permission denied to WRITE_EXTERNAL_STORAGE - requesting it");
+                String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                requestPermissions(permissions, 1);
+            }
+        }
+
+        webView.setWebViewClient(new WebViewClient() {
+             @Override
+             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                 if (url.contains(".mp4")
+                         || url.contains(".mp3")
+                         || url.contains(".ogg")
+                         || url.contains(".flac")
+                         || url.contains(".wav")
+                         || url.contains(".mkv")
+                         || url.contains(".mov")
+                         || url.contains(".wmv")
+                         || url.contains(".oga")
+                         || url.contains(".ogv")
+                         || url.contains(".opus")
+                         || url.contains(".webm")) {
+                     DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                     String fileName = url.substring(url.lastIndexOf('/') + 1, url.length());
+                     request.setTitle(fileName);
+                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                         request.allowScanningByMediaScanner();
+                         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                     }
+                     request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+                     DownloadManager manager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
+                     manager.enqueue(request);
+                     return true;
+                 } else {
+                     return false;
+                 }
+             }
+        });
+
         webView.setWebChromeClient(new MyChrome() {
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 if (mUMA != null) {

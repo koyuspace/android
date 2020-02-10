@@ -2,7 +2,8 @@ package com.Sommerlichter.social;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.webkit.*;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import java.net.MalformedURLException;
 import java.net.URL;
