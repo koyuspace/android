@@ -17,14 +17,18 @@ import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.View;
+import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
     boolean loaded = false;
     boolean fullscreen = false;
+    String downloadURL = "";
     WebView webView;
     private String mCM;
     private ValueCallback<Uri> mUM;
@@ -127,48 +132,47 @@ public class MainActivity extends AppCompatActivity {
         String start_url = this.manifestObject.optString("start_url");
         String scope = this.manifestObject.optString("scope");
         myWebView.setWebViewClient(new PwaWebViewClient(start_url, scope));
+        registerForContextMenu(myWebView);
         myWebView.loadUrl(start_url);
         myWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_DENIED) {
-                Log.d("permission", "permission denied to WRITE_EXTERNAL_STORAGE - requesting it");
-                String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                requestPermissions(permissions, 1);
-            }
-        }
-
         webView.setWebViewClient(new WebViewClient() {
-             @Override
-             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                 if (url.contains(".mp4")
-                         || url.contains(".mp3")
-                         || url.contains(".ogg")
-                         || url.contains(".flac")
-                         || url.contains(".wav")
-                         || url.contains(".mkv")
-                         || url.contains(".mov")
-                         || url.contains(".wmv")
-                         || url.contains(".oga")
-                         || url.contains(".ogv")
-                         || url.contains(".opus")
-                         || url.contains(".webm")) {
-                     DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-                     String fileName = url.substring(url.lastIndexOf('/') + 1, url.length());
-                     request.setTitle(fileName);
-                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                         request.allowScanningByMediaScanner();
-                         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                     }
-                     request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
-                     DownloadManager manager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
-                     manager.enqueue(request);
-                     return true;
-                 } else {
-                     return false;
-                 }
-             }
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url.contains(".mp4")
+                        || url.contains(".mp3")
+                        || url.contains(".ogg")
+                        || url.contains(".flac")
+                        || url.contains(".wav")
+                        || url.contains(".mkv")
+                        || url.contains(".mov")
+                        || url.contains(".wmv")
+                        || url.contains(".oga")
+                        || url.contains(".ogv")
+                        || url.contains(".opus")
+                        || url.contains(".webm")) {
+                    if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                        downloadURL = url;
+                        String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                        requestPermissions(permissions, 1);
+                        return true;
+                    } else {
+                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                        String fileName = url.substring(url.lastIndexOf('/') + 1, url.length());
+                        request.setTitle(fileName);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                            request.allowScanningByMediaScanner();
+                            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                        }
+                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+                        DownloadManager manager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
+                        manager.enqueue(request);
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
+            }
         });
 
         webView.setWebChromeClient(new MyChrome() {
@@ -212,6 +216,50 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadURL));
+        String fileName = downloadURL.substring(downloadURL.lastIndexOf('/') + 1, downloadURL.length());
+        request.setTitle(fileName);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            request.allowScanningByMediaScanner();
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+        }
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+        DownloadManager manager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
+        manager.enqueue(request);
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu contextMenu, View view, ContextMenu.ContextMenuInfo contextMenuInfo){
+        super.onCreateContextMenu(contextMenu, view, contextMenuInfo);
+
+        final WebView.HitTestResult webViewHitTestResult = webView.getHitTestResult();
+
+        if (webViewHitTestResult.getType() == WebView.HitTestResult.IMAGE_TYPE ||
+                webViewHitTestResult.getType() == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
+
+            contextMenu.add(0, 1, 0, R.string.download)
+                    .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem menuItem) {
+
+                            String DownloadImageURL = webViewHitTestResult.getExtra();
+
+                            if(URLUtil.isValidUrl(DownloadImageURL)){
+
+                                DownloadManager.Request mRequest = new DownloadManager.Request(Uri.parse(DownloadImageURL));
+                                mRequest.allowScanningByMediaScanner();
+                                mRequest.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                                DownloadManager mDownloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                                mDownloadManager.enqueue(mRequest);
+                            }
+                            return false;
+                        }
+                    });
+        }
     }
 
     @Override

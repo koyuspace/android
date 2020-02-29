@@ -4,10 +4,10 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId 'com.Sommerlichter.social'
-        minSdkVersion 19
+        minSdkVersion 24
         targetSdkVersion 28
-        versionCode 1400
-        versionName '1.4.0'
+        versionCode 1410
+        versionName '1.4.1'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
