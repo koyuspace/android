@@ -139,6 +139,12 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (!url.contains("https://koyu.space")) { // TODO: don't hardcode koyu.space
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(url));
+                    startActivity(intent);
+                    return true;
+                }
                 if (url.contains(".mp4")
                         || url.contains(".mp3")
                         || url.contains(".ogg")
