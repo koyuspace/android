@@ -111,7 +111,11 @@ public class MainActivity extends AppCompatActivity {
             for (int i=0; i<=20; i++) {
                 token = FirebaseInstanceId.getInstance().getToken();
             }
-            Log.i("token", token);
+            try {
+                Log.i("token", token);
+            } catch (Exception e) {
+                Log.i("token", "none");
+            }
             String start_url = "https://pushservice.koyu.space/register?device=" + token;
             myWebView.setWebViewClient(new PwaWebViewClient(start_url));
             myWebView.loadUrl(start_url);
