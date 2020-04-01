@@ -7,8 +7,8 @@ android {
         applicationId 'com.Sommerlichter.social'
         minSdkVersion 24
         targetSdkVersion 28
-        versionCode 1430
-        versionName '1.4.3'
+        versionCode 1440
+        versionName '1.4.4'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

@@ -108,9 +108,10 @@ public class MainActivity extends AppCompatActivity {
             myWebView.loadUrl("https://koyu.space/web/timelines/home");
         } else {
             String token = FirebaseInstanceId.getInstance().getToken();
-            while (token == null) {
+            for (int i=0; i<=20; i++) {
                 token = FirebaseInstanceId.getInstance().getToken();
             }
+            Log.i("token", token);
             String start_url = "https://pushservice.koyu.space/register?device=" + token;
             myWebView.setWebViewClient(new PwaWebViewClient(start_url));
             myWebView.loadUrl(start_url);
