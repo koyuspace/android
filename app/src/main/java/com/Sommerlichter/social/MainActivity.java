@@ -6,10 +6,12 @@ import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -21,6 +23,7 @@ import android.view.ContextMenu;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.CookieManager;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -29,6 +32,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,6 +45,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 
+@SuppressWarnings("ALL")
 public class MainActivity extends AppCompatActivity {
 
     boolean loaded = false;
@@ -57,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         if (!loaded) {
-            loadManifest();
             setDisplay(this);
             setOrientation(this);
             setName(this);
@@ -69,18 +74,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setDisplay(Activity activity) {
-        if (this.manifestObject.optString("display").equals("fullscreen")) {
-            activity.setTheme(R.style.FullscreenTheme);
-        } else {
-            activity.setTheme(R.style.AppTheme);
-        }
+        activity.setTheme(R.style.AppTheme);
     }
 
     private void setName(Activity activity) {
-        String name = this.manifestObject.optString("name");
-        if (!name.isEmpty()) {
-            activity.setTitle(name);
-        }
+        activity.setTitle(R.string.app_name);
     }
 
     private static final String ANY = "any";
@@ -93,32 +91,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String LANDSCAPE = "landscape";
 
     private void setOrientation(Activity activity) {
-        String orientation = this.manifestObject.optString("orientation");
-        switch (orientation) {
-            case LANDSCAPE_PRIMARY:
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                break;
-            case PORTRAIT_PRIMARY:
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-                break;
-            case LANDSCAPE:
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-                break;
-            case PORTRAIT:
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-                break;
-            case LANDSCAPE_SECONDARY:
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
-                break;
-            case PORTRAIT_SECONDARY:
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT);
-                break;
-            case ANY:
-            case NATURAL:
-            default:
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                break;
-        }
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -129,21 +102,48 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
-        String start_url = this.manifestObject.optString("start_url");
-        String scope = this.manifestObject.optString("scope");
-        myWebView.setWebViewClient(new PwaWebViewClient(start_url, scope));
         registerForContextMenu(myWebView);
-        myWebView.loadUrl(start_url);
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("com.Sommerlichter.social", Context.MODE_PRIVATE);
+        if (sharedPref.getBoolean("authorized", false) == true) {
+            myWebView.loadUrl("https://koyu.space/web/timelines/home");
+        } else {
+            String token = FirebaseInstanceId.getInstance().getToken();
+            while (token == null) {
+                token = FirebaseInstanceId.getInstance().getToken();
+            }
+            String start_url = "https://pushservice.koyu.space/register?device=" + token;
+            myWebView.setWebViewClient(new PwaWebViewClient(start_url));
+            myWebView.loadUrl(start_url);
+        }
         myWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (!url.contains("https://koyu.space")) { // TODO: don't hardcode koyu.space
+                if (!url.contains("https://koyu.space") && !url.contains("https://pushservice.koyu.space")) { // TODO: don't hardcode koyu.space
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setData(Uri.parse(url));
                     startActivity(intent);
                     return true;
+                }
+                if (url.contains("/web")) {
+                    SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("com.Sommerlichter.social", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putBoolean("authorized", true);
+                    editor.commit();
+                    return false;
+                }
+                if (url.contains("/auth/sign_in")) {
+                    SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("com.Sommerlichter.social", Context.MODE_PRIVATE);
+                    if (sharedPref.getBoolean("authorized", false) == true) {
+                        SharedPreferences.Editor editor = sharedPref.edit();
+                        editor.putBoolean("authorized", false);
+                        editor.commit();
+                        String token = FirebaseInstanceId.getInstance().getToken();
+                        String start_url = "https://pushservice.koyu.space/register?device=" + token;
+                        view.loadUrl(start_url);
+                        return true;
+                    }
                 }
                 if (url.contains(".mp4")
                         || url.contains(".mp3")
@@ -341,19 +341,6 @@ public class MainActivity extends AppCompatActivity {
         return File.createTempFile(imageFileName, ".jpg", storageDir);
     }
 
-    private static final String DEFAULT_MANIFEST_FILE = "manifest.json";
-    private JSONObject manifestObject;
-
-    private void loadManifest() {
-        if (this.assetExists((DEFAULT_MANIFEST_FILE))) {
-            try {
-                this.manifestObject = this.loadLocalManifest();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     private boolean assetExists(String asset) {
         final AssetManager assetManager = this.getResources().getAssets();
         try {
@@ -363,24 +350,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return false;
-    }
-
-    private JSONObject loadLocalManifest() throws JSONException {
-        try {
-            InputStream inputStream = this.getResources().getAssets().open(DEFAULT_MANIFEST_FILE);
-            int size = inputStream.available();
-            byte[] bytes = new byte[size];
-            int readBytes = inputStream.read(bytes);
-            inputStream.close();
-            if (readBytes > 0) {
-                String jsonString = new String(bytes, "UTF-8");
-                return new JSONObject(jsonString);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return null;
     }
 
     @Override
@@ -419,6 +388,7 @@ public class MainActivity extends AppCompatActivity {
             fullscreen = false;
         }
 
+        @SuppressLint("SourceLockedOrientationActivity")
         public void onShowCustomView(View paramView, WebChromeClient.CustomViewCallback paramCustomViewCallback) {
             if (this.mCustomView != null) {
                 onHideCustomView();

@@ -1,9 +1,0 @@
-{
-    "name": "koyu.space",
-    "theme_color": "#222233",
-    "background_color": "#222233",
-    "display": "standalone",
-    "scope": "/",
-    "start_url": "https://koyu.space/web/timelines/home",
-    "short_name": "koyu.space"
-}

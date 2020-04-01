@@ -12,10 +12,10 @@ import java.util.regex.Pattern;
 class PwaWebViewClient extends WebViewClient {
     private Pattern scope_pattern;
 
-    public PwaWebViewClient(String start_url, String scope) {
+    public PwaWebViewClient(String start_url) {
         try {
             URL baseUrl = new URL(start_url);
-            URL scopeUrl = new URL(baseUrl, scope);
+            URL scopeUrl = new URL(start_url);
             if (!scopeUrl.toString().endsWith("*")) {
                 scopeUrl = new URL(scopeUrl, "*");
             }
