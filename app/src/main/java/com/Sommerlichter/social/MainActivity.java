@@ -104,22 +104,18 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setAllowContentAccess(true);
         registerForContextMenu(myWebView);
         SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("com.Sommerlichter.social", Context.MODE_PRIVATE);
-        if (sharedPref.getBoolean("authorized", false) == true) {
-            myWebView.loadUrl("https://koyu.space/web/timelines/home");
-        } else {
-            String token = FirebaseInstanceId.getInstance().getToken();
-            for (int i=0; i<=20; i++) {
-                token = FirebaseInstanceId.getInstance().getToken();
-            }
-            try {
-                Log.i("token", token);
-            } catch (Exception e) {
-                Log.i("token", "none");
-            }
-            String start_url = "https://pushservice.koyu.space/register?device=" + token;
-            myWebView.setWebViewClient(new PwaWebViewClient(start_url));
-            myWebView.loadUrl(start_url);
+        String token = FirebaseInstanceId.getInstance().getToken();
+        for (int i=0; i<=20; i++) {
+            token = FirebaseInstanceId.getInstance().getToken();
         }
+        try {
+            Log.i("token", token);
+        } catch (Exception e) {
+            Log.i("token", "none");
+        }
+        String start_url = "https://pushservice.koyu.space/register?device=" + token;
+        myWebView.setWebViewClient(new PwaWebViewClient(start_url));
+        myWebView.loadUrl(start_url);
         myWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         webView.setWebViewClient(new WebViewClient() {
