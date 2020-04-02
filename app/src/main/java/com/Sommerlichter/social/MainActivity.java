@@ -125,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (!url.contains("https://koyu.space") && !url.contains("https://pushservice.koyu.space")) { // TODO: don't hardcode koyu.space
+                if (!url.contains("https://koyu.space") && !url.contains("https://pushservice.koyu.space") && !url.contains("media_attachments")) { // TODO: don't hardcode koyu.space
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setData(Uri.parse(url));
                     startActivity(intent);
@@ -137,6 +137,11 @@ public class MainActivity extends AppCompatActivity {
                     editor.putBoolean("authorized", true);
                     editor.commit();
                     return false;
+                }
+                if (url.contains("/retry")) {
+                    String token = FirebaseInstanceId.getInstance().getToken();
+                    String start_url = "https://pushservice.koyu.space/register?device=" + token;
+                    view.loadUrl(start_url);
                 }
                 if (url.contains("/auth/sign_in")) {
                     SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("com.Sommerlichter.social", Context.MODE_PRIVATE);
