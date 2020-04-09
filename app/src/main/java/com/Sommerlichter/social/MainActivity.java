@@ -151,6 +151,14 @@ public class MainActivity extends AppCompatActivity {
                         return true;
                     }
                 }
+                if (url.contains("/about") && !url.contains("/about/more")) {
+                    SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("com.Sommerlichter.social", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putBoolean("authorized", true);
+                    editor.commit();
+                    view.loadUrl("https://koyu.space/auth/sign_in");
+                    return true;
+                }
                 if (url.contains(".mp4")
                         || url.contains(".mp3")
                         || url.contains(".ogg")
