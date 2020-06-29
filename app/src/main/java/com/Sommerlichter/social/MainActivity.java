@@ -3,15 +3,20 @@ package com.Sommerlichter.social;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Application;
 import android.app.DownloadManager;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -23,7 +28,6 @@ import android.view.ContextMenu;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.CookieManager;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -31,16 +35,13 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -115,13 +116,30 @@ public class MainActivity extends AppCompatActivity {
         }
         String start_url = "https://pushservice.koyu.space/register?device=" + token;
         myWebView.setWebViewClient(new PwaWebViewClient(start_url));
+        myWebView.setBackgroundColor(Color.parseColor("#222233"));
         myWebView.loadUrl(start_url);
         myWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         webView.setWebViewClient(new WebViewClient() {
+
+            private ProgressBar spinner = (ProgressBar)findViewById(R.id.progressBar1);
+
+            @Override
+            public void onPageStarted(WebView webview, String url, Bitmap favicon) {
+                spinner.setVisibility(View.VISIBLE);
+                webview.setVisibility(webview.INVISIBLE);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                spinner.setVisibility(View.GONE);
+                view.setVisibility(view.VISIBLE);
+                super.onPageFinished(view, url);
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (!url.contains("https://koyu.space") && !url.contains("https://pushservice.koyu.space") && !url.contains("media_attachments")) { // TODO: don't hardcode koyu.space
+                if (!url.contains("https://koyu.space") && !url.contains("https://pushservice.koyu.space") && !url.contains("media_attachments") && !url.contains("https://koyuawsmbrtn.gitlab.io") && !url.contains("https://koyuawsmbrtn.github.io")) { // TODO: don't hardcode koyu.space
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setData(Uri.parse(url));
                     startActivity(intent);
@@ -137,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
                 if (url.contains("/retry")) {
                     String token = FirebaseInstanceId.getInstance().getToken();
                     String start_url = "https://pushservice.koyu.space/register?device=" + token;
+                    view.setBackgroundColor(Color.parseColor("#222233"));
                     view.loadUrl(start_url);
                 }
                 if (url.contains("/auth/sign_in")) {
@@ -147,6 +166,7 @@ public class MainActivity extends AppCompatActivity {
                         editor.commit();
                         String token = FirebaseInstanceId.getInstance().getToken();
                         String start_url = "https://pushservice.koyu.space/register?device=" + token;
+                        view.setBackgroundColor(Color.parseColor("#222233"));
                         view.loadUrl(start_url);
                         return true;
                     }
@@ -156,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putBoolean("authorized", true);
                     editor.commit();
+                    view.setBackgroundColor(Color.parseColor("#222233"));
                     view.loadUrl("https://koyu.space/auth/sign_in");
                     return true;
                 }
