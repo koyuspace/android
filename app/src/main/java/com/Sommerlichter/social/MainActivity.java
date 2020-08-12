@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
+        webSettings.setDomStorageEnabled(true);
         registerForContextMenu(myWebView);
         SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("com.Sommerlichter.social", Context.MODE_PRIVATE);
         String token = FirebaseInstanceId.getInstance().getToken();
