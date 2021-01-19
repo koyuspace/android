@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
     defaultConfig {
         applicationId 'com.Sommerlichter.social'
-        minSdkVersion 24
-        targetSdkVersion 29
-        versionCode 2006
-        versionName '2.0.6'
+        minSdkVersion 21
+        targetSdkVersion 30
+        versionCode 2007
+        versionName '2.0.7'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
